@@ -1,0 +1,46 @@
+#!/bin/bash
+
+echo "========================================="
+echo "Network Slicing Simulator - Installation"
+echo "========================================="
+
+# Check if Python is installed
+if ! command -v python3 &> /dev/null; then
+    echo "Python3 not found. Installing..."
+    sudo apt update
+    sudo apt install python3 -y
+fi
+
+# Check if pip is installed
+if ! command -v pip3 &> /dev/null; then
+    echo "pip3 not found. Installing..."
+    sudo apt install python3-pip -y
+fi
+
+# Create virtual environment (avoids permission issues)
+echo "Creating virtual environment..."
+python3 -m venv slicing_venv
+
+# Activate virtual environment
+source slicing_venv/bin/activate
+
+# Install required packages
+echo "Installing matplotlib..."
+pip install matplotlib
+
+echo "Installing numpy..."
+pip install numpy
+
+echo ""
+echo "========================================="
+echo "Installation Complete!"
+echo "========================================="
+echo ""
+echo "To activate the environment, run:"
+echo "  source slicing_venv/bin/activate"
+echo ""
+echo "Then run the simulator:"
+echo "  python network_slicing.py"
+echo ""
+echo "To deactivate when done:"
+echo "  deactivate"

@@ -7,3 +7,16 @@ numpy	pip install numpy	Mathematical operations
 pandas	pip install pandas	Advanced data analysis
 jupyter	pip install jupyter	Run as notebook
 scipy	pip install scipy	Advanced math functions
+
+slicing_project/
+│
+├── network_slicing.py          # Main simulator code
+├── unlimited_slicing.py        # Unlimited version
+├── test.py                     # Installation test
+│
+├── logs/                       # Created automatically
+│   ├── network_slicing_data_*.csv
+│   ├── simulation_log_*.txt
+│   └── simulation_summary_*.txt
+│
+└── requirements.txt            # (Optional) List dependencies

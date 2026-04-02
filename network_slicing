@@ -1,0 +1,458 @@
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.animation import FuncAnimation
+import matplotlib
+import csv
+import os
+from datetime import datetime
+import random
+
+matplotlib.use('TkAgg')
+
+class UnlimitedNetworkSlicingSimulator:
+    def __init__(self, save_directory=None):
+
+
+        # ============================================
+        # SLICE CONFIGURATIONS
+        # ============================================
+        self.slices = {
+            'eMBB Video': {
+                'capacity': 800,  # Mbps
+                'traffic_history': [],
+                'color': 'blue',
+                'type': 'Enhanced Mobile Broadband',
+                'priority': 2
+            },
+            'URLLC Auto': {
+                'capacity': 300,  # Mbps
+                'traffic_history': [],
+                'color': 'red',
+                'type': 'Ultra-Reliable Low Latency',
+                'priority': 1
+            },
+            'mMTC IoT': {
+                'capacity': 150,  # Mbps
+                'traffic_history': [],
+                'color': 'green',
+                'type': 'Massive IoT',
+                'priority': 3
+            }
+        }
+
+        # Network Functions (5G Core)
+        self.network_functions = {
+            'UPF': {'name': 'User Plane Function', 'load_history': [], 'color': 'purple'},
+            'AMF': {'name': 'Access Management', 'load_history': [], 'color': 'orange'},
+            'SMF': {'name': 'Session Management', 'load_history': [], 'color': 'brown'},
+            'PCF': {'name': 'Policy Control', 'load_history': [], 'color': 'pink'},
+            'NSSF': {'name': 'Slice Selection', 'load_history': [], 'color': 'cyan'}
+        }
+
+        # Simulation state (UNLIMITED)
+        self.time_steps = []
+        self.current_time = 0
+        self.log_data = []
+        self.running = True
+
+        # ============================================
+        # FILE SETUP FOR LOGGING - SPECIFIC LOCATION
+        # ============================================
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Set save directory
+        if save_directory is None:
+            # Default: Desktop/Network_Slicing_Logs
+            desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+            self.save_dir = os.path.join(desktop_path, "Network_Slicing_Logs")
+        else:
+            # Use the specified directory
+            self.save_dir = save_directory
+
+        # Create directory if it doesn't exist
+        os.makedirs(self.save_dir, exist_ok=True)
+
+        # File names
+        self.csv_filename = os.path.join(self.save_dir, f"network_slicing_data_{timestamp}.csv")
+        self.log_filename = os.path.join(self.save_dir, f"simulation_log_{timestamp}.txt")
+        self.summary_filename = os.path.join(self.save_dir, f"simulation_summary_{timestamp}.txt")
+
+        # Initialize log files
+        self.init_log_files()
+
+        # ============================================
+        # SETUP ANIMATION
+        # ============================================
+        self.fig = plt.figure(figsize=(16, 10))
+        self.fig.suptitle('5G Network Slicing Simulator - Real-time Monitoring (Unlimited Run Time)',
+                         fontsize=14, fontweight='bold')
+
+        # Create subplots
+        self.ax1 = plt.subplot(3, 2, 1)  # Traffic over time
+        self.ax2 = plt.subplot(3, 2, 2)  # Current utilization
+        self.ax3 = plt.subplot(3, 2, 3)  # Resource allocation pie
+        self.ax4 = plt.subplot(3, 2, 4)  # NF loads
+        self.ax5 = plt.subplot(3, 2, 5)  # Slice comparison
+        self.ax6 = plt.subplot(3, 2, 6)  # Real-time stats
+
+        plt.tight_layout()
+
+        # Display file locations
+        self.display_file_locations()
+
+    def init_log_files(self):
+        """Initialize CSV and log files"""
+        # CSV file with headers
+        with open(self.csv_filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([
+                'Timestamp', 'Time_Step', 'Slice_Name', 'Slice_Type',
+                'Traffic_Mbps', 'Capacity_Mbps', 'Utilization_Percent',
+                'Status', 'UPF_Load', 'AMF_Load', 'SMF_Load', 'PCF_Load', 'NSSF_Load'
+            ])
+
+        # Text log file
+        with open(self.log_filename, 'w') as logfile:
+            logfile.write("="*80 + "\n")
+            logfile.write("5G NETWORK SLICING SIMULATION LOG\n")
+            logfile.write("="*80 + "\n")
+            logfile.write(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            logfile.write(f"Save Directory: {self.save_dir}\n")
+            logfile.write(f"CSV File: {self.csv_filename}\n")
+            logfile.write("="*80 + "\n\n")
+            logfile.write("NOTE: Simulation runs UNLIMITED until manually stopped\n\n")
+
+    def display_file_locations(self):
+        """Display where files are being saved"""
+        print("\n" + "="*80)
+        print("5G NETWORK SLICING SIMULATOR - UNLIMITED RUN TIME")
+        print("="*80)
+        print(f"\n📁 SAVING LOGS TO:")
+        print(f"   {self.save_dir}")
+        print(f"\n📄 FILES:")
+        print(f"   CSV Data: {self.csv_filename}")
+        print(f"   Text Log: {self.log_filename}")
+        print(f"   Summary:  {self.summary_filename}")
+        print("\n" + "="*80)
+        print("✅ Simulation will run CONTINUOUSLY until you close the plot window")
+        print("📊 All data is being logged in real-time to CSV")
+        print("="*80 + "\n")
+
+    def generate_traffic(self, slice_name, time_step):
+        """Generate realistic traffic patterns for different slice types"""
+        if 'eMBB' in slice_name:
+            # Video streaming traffic (variable)
+            base = 400
+            variation = 200 * np.sin(time_step * 0.05)
+            noise = np.random.randn() * 30
+            return base + variation + noise
+        elif 'URLLC' in slice_name:
+            # Autonomous driving (sudden spikes)
+            base = 200
+            variation = 80 * np.abs(np.sin(time_step * 0.08))
+            noise = np.random.randn() * 20
+            return base + variation + noise
+        else:
+            # IoT sensors (steady baseline with occasional bursts)
+            base = 80
+            variation = 30 * np.sin(time_step * 0.03)
+            noise = np.random.randn() * 15
+            return base + variation + noise
+
+    def generate_nf_load(self, nf_name, time_step):
+        """Generate realistic load for network functions"""
+        loads = {
+            'UPF': 45 + 20 * np.sin(time_step * 0.04) + np.random.randn() * 8,
+            'AMF': 35 + 15 * np.sin(time_step * 0.05) + np.random.randn() * 6,
+            'SMF': 40 + 18 * np.sin(time_step * 0.06) + np.random.randn() * 7,
+            'PCF': 30 + 12 * np.sin(time_step * 0.07) + np.random.randn() * 5,
+            'NSSF': 25 + 10 * np.sin(time_step * 0.08) + np.random.randn() * 5
+        }
+        load = loads.get(nf_name, 50)
+        return min(100, max(0, load))
+
+    def log_to_csv(self, time_step, slice_name, slice_data, traffic, utilization, nf_loads):
+        """Log a single data point to CSV"""
+        status = 'NORMAL' if utilization < 80 else 'WARNING' if utilization < 95 else 'CRITICAL'
+
+        with open(self.csv_filename, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+                time_step,
+                slice_name,
+                slice_data['type'],
+                f"{traffic:.2f}",
+                slice_data['capacity'],
+                f"{utilization:.2f}",
+                status,
+                f"{nf_loads.get('UPF', 0):.2f}",
+                f"{nf_loads.get('AMF', 0):.2f}",
+                f"{nf_loads.get('SMF', 0):.2f}",
+                f"{nf_loads.get('PCF', 0):.2f}",
+                f"{nf_loads.get('NSSF', 0):.2f}"
+            ])
+
+    def update_animation(self, frame):
+        """Update all plots (runs continuously)"""
+        self.current_time += 1
+        self.time_steps.append(self.current_time)
+
+        # Keep last 100 time steps for display
+        if len(self.time_steps) > 100:
+            self.time_steps = self.time_steps[-100:]
+
+        # Generate current NF loads
+        current_nf_loads = {}
+        for nf_name in self.network_functions:
+            load = self.generate_nf_load(nf_name, self.current_time)
+            current_nf_loads[nf_name] = load
+            self.network_functions[nf_name]['load_history'].append(load)
+            if len(self.network_functions[nf_name]['load_history']) > 100:
+                self.network_functions[nf_name]['load_history'] = self.network_functions[nf_name]['load_history'][-100:]
+
+        # Clear all axes
+        self.ax1.clear()
+        self.ax2.clear()
+        self.ax3.clear()
+        self.ax4.clear()
+        self.ax5.clear()
+        self.ax6.clear()
+
+        # Update traffic data for each slice and log to CSV
+        slice_names = []
+        utilizations = []
+        colors = []
+        current_traffics = {}
+
+        for slice_name, data in self.slices.items():
+            # Generate new traffic
+            traffic = self.generate_traffic(slice_name, self.current_time)
+            traffic = min(traffic, data['capacity'] * 1.1)  # Cap at 110%
+            current_traffics[slice_name] = traffic
+            data['traffic_history'].append(traffic)
+
+            # Keep last 100 points
+            if len(data['traffic_history']) > 100:
+                data['traffic_history'] = data['traffic_history'][-100:]
+
+            # Calculate utilization
+            utilization = (traffic / data['capacity']) * 100
+            slice_names.append(slice_name)
+            utilizations.append(utilization)
+            colors.append(data['color'])
+
+            # Log to CSV
+            self.log_to_csv(self.current_time, slice_name, data, traffic, utilization, current_nf_loads)
+
+        # Plot 1: Traffic over time
+        self.ax1.set_title('Slice Traffic Over Time (Last 100 steps)', fontsize=10, fontweight='bold')
+        self.ax1.set_xlabel('Time Step')
+        self.ax1.set_ylabel('Bandwidth (Mbps)')
+
+        for slice_name, data in self.slices.items():
+            if len(data['traffic_history']) == len(self.time_steps[-len(data['traffic_history']):]):
+                self.ax1.plot(self.time_steps[-len(data['traffic_history']):],
+                            data['traffic_history'],
+                            label=slice_name,
+                            color=data['color'],
+                            linewidth=2)
+                self.ax1.axhline(y=data['capacity'], color=data['color'], linestyle='--', alpha=0.5)
+
+        self.ax1.legend(loc='upper left', fontsize=7)
+        self.ax1.grid(True, alpha=0.3)
+        self.ax1.set_ylim(0, 1000)
+
+        # Plot 2: Current utilization (Bar chart)
+        self.ax2.set_title('Current Slice Utilization', fontsize=10, fontweight='bold')
+        bars = self.ax2.bar(slice_names, utilizations, color=colors, alpha=0.7, edgecolor='black')
+        self.ax2.set_ylabel('Utilization (%)')
+        self.ax2.set_ylim(0, 120)
+        self.ax2.axhline(y=80, color='orange', linestyle='--', linewidth=2, label='Warning (80%)')
+        self.ax2.axhline(y=100, color='red', linestyle='--', linewidth=2, label='Capacity (100%)')
+        self.ax2.legend(loc='upper right', fontsize=7)
+        self.ax2.grid(True, alpha=0.3, axis='y')
+
+        # Add value labels on bars
+        for bar, util in zip(bars, utilizations):
+            height = bar.get_height()
+            self.ax2.text(bar.get_x() + bar.get_width()/2., height + 2,
+                         f'{util:.1f}%', ha='center', va='bottom', fontsize=8, fontweight='bold')
+
+        # Plot 3: Resource allocation pie chart
+        self.ax3.set_title('Resource Allocation by Slice', fontsize=10, fontweight='bold')
+        capacities = [data['capacity'] for data in self.slices.values()]
+        self.ax3.pie(capacities, labels=slice_names, colors=colors, autopct='%1.1f%%', startangle=90)
+        self.ax3.set_aspect('equal')
+
+        # Plot 4: Network function status
+        self.ax4.set_title('Network Function Load Status', fontsize=10, fontweight='bold')
+        nf_names = list(self.network_functions.keys())
+        nf_loads = [current_nf_loads[nf] for nf in nf_names]
+        nf_colors = ['green' if l < 70 else 'orange' if l < 85 else 'red' for l in nf_loads]
+        bars = self.ax4.bar(nf_names, nf_loads, color=nf_colors, edgecolor='black')
+        self.ax4.set_ylabel('Load (%)')
+        self.ax4.set_ylim(0, 100)
+        self.ax4.axhline(y=70, color='orange', linestyle='--', linewidth=1, alpha=0.7, label='Warning')
+        self.ax4.axhline(y=85, color='red', linestyle='--', linewidth=1, alpha=0.7, label='Critical')
+        self.ax4.legend(loc='upper right', fontsize=7)
+        self.ax4.grid(True, alpha=0.3, axis='y')
+
+        for bar, load in zip(bars, nf_loads):
+            height = bar.get_height()
+            self.ax4.text(bar.get_x() + bar.get_width()/2., height + 1,
+                         f'{load:.0f}%', ha='center', va='bottom', fontsize=7)
+
+        # Plot 5: Slice comparison
+        self.ax5.set_title('Slice Performance Comparison', fontsize=10, fontweight='bold')
+        x = np.arange(len(slice_names))
+        width = 0.35
+        current_traffic_values = [current_traffics[name] for name in slice_names]
+        capacity_values = [self.slices[name]['capacity'] for name in slice_names]
+
+        self.ax5.bar(x - width/2, current_traffic_values, width, label='Current Traffic', color='blue', alpha=0.7)
+        self.ax5.bar(x + width/2, capacity_values, width, label='Capacity', color='gray', alpha=0.5)
+        self.ax5.set_ylabel('Mbps')
+        self.ax5.set_xticks(x)
+        self.ax5.set_xticklabels(slice_names, rotation=15, ha='right', fontsize=8)
+        self.ax5.legend(fontsize=7)
+        self.ax5.grid(True, alpha=0.3, axis='y')
+
+        # Plot 6: Real-time statistics
+        self.ax6.set_title('Real-time Statistics', fontsize=10, fontweight='bold')
+        self.ax6.axis('off')
+
+        # Calculate statistics
+        total_capacity = sum(data['capacity'] for data in self.slices.values())
+        total_traffic = sum(current_traffics.values())
+        overall_util = (total_traffic / total_capacity) * 100 if total_capacity > 0 else 0
+
+        stats_text = f"""
+        SIMULATION STATUS
+        ---------------------------------
+        Time Steps: {self.current_time}
+        Running: UNLIMITED (close window to stop)
+        
+        AGGREGATE STATISTICS
+        ---------------------------------
+        Total Capacity: {total_capacity:.0f} Mbps
+        Total Traffic:  {total_traffic:.0f} Mbps
+        Overall Utilization: {overall_util:.1f}%
+        
+        LOGGING STATUS
+        ---------------------------------
+        CSV File: {os.path.basename(self.csv_filename)}
+        Data Points Logged: {self.current_time * len(self.slices)}
+        
+        TIPS
+        ---------------------------------
+        Close window to stop simulation
+        Check CSV file for complete data
+        All data is saved in real-time
+        """
+
+        self.ax6.text(0.1, 0.95, stats_text, transform=self.ax6.transAxes,
+                     fontsize=9, verticalalignment='top', fontfamily='monospace',
+                     bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.8))
+
+        plt.tight_layout()
+
+        # Print progress every 50 frames
+        if self.current_time % 50 == 0:
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Frame {self.current_time} - Logged to CSV | Total records: {self.current_time * len(self.slices)}")
+
+    def on_close(self, event):
+        """Handle window close event"""
+        print("\n" + "="*80)
+        print("SIMULATION STOPPED - Generating Summary")
+        print("="*80)
+        self.generate_summary()
+
+    def generate_summary(self):
+        """Generate a summary report"""
+        with open(self.summary_filename, 'w') as f:
+            f.write("="*80 + "\n")
+            f.write("NETWORK SLICING SIMULATION SUMMARY\n")
+            f.write("="*80 + "\n\n")
+            f.write(f"Simulation Ended: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Total Frames Simulated: {self.current_time}\n")
+            f.write(f"Total Data Points Logged: {self.current_time * len(self.slices)}\n\n")
+
+            f.write("SLICE CONFIGURATIONS:\n")
+            f.write("-"*40 + "\n")
+            for slice_name, data in self.slices.items():
+                f.write(f"\n  {slice_name}:\n")
+                f.write(f"    - Type: {data['type']}\n")
+                f.write(f"    - Capacity: {data['capacity']} Mbps\n")
+                f.write(f"    - Priority: {data['priority']}\n")
+
+            f.write("\n\nNETWORK FUNCTIONS:\n")
+            f.write("-"*40 + "\n")
+            for nf_name, nf_data in self.network_functions.items():
+                f.write(f"\n  {nf_name}: {nf_data['name']}\n")
+
+            f.write("\n\nFILES GENERATED:\n")
+            f.write("-"*40 + "\n")
+            f.write(f"  CSV Data: {self.csv_filename}\n")
+            f.write(f"  Text Log: {self.log_filename}\n")
+            f.write(f"  Summary:  {self.summary_filename}\n")
+
+            f.write("\n\n" + "="*80 + "\n")
+            f.write("END OF SUMMARY\n")
+            f.write("="*80 + "\n")
+
+        print(f"\n✅ Summary saved to: {self.summary_filename}")
+        print(f"✅ Complete data saved to: {self.csv_filename}")
+        print(f"\n📊 Final Statistics:")
+        print(f"   Total Frames: {self.current_time}")
+        print(f"   Total Records: {self.current_time * len(self.slices)}")
+        print("\n" + "="*80)
+
+    def run(self):
+        """Run the unlimited animation"""
+        # Connect close event
+        self.fig.canvas.mpl_connect('close_event', self.on_close)
+
+        # Create animation (runs until window is closed)
+        anim = FuncAnimation(self.fig, self.update_animation, interval=200,
+                           cache_frame_data=False, repeat=True)
+
+        print("\n" + "="*80)
+        print("STARTING UNLIMITED NETWORK SLICING SIMULATION")
+        print("="*80)
+        print("\n✅ Simulation is running and logging data in real-time")
+        print("✅ CSV file is being updated every frame")
+        print("✅ Close the plot window to stop the simulation\n")
+
+        plt.show()
+
+        print("\n✅ Simulation completed successfully!")
+
+
+# ============================================
+# RUN THE SIMULATION
+# ============================================
+
+if __name__ == "__main__":
+    # OPTION 1: Save to Desktop (default)
+    simulator = UnlimitedNetworkSlicingSimulator()
+
+    # OPTION 2: Save to a specific location (uncomment and modify)
+    # simulator = UnlimitedNetworkSlicingSimulator(
+    #     save_directory=r"C:\Users\gvenk\Desktop\MyNetworkSlicingLogs"
+    # )
+
+    # OPTION 3: Save to Documents folder (uncomment and modify)
+    # simulator = UnlimitedNetworkSlicingSimulator(
+    #     save_directory=r"C:\Users\gvenk\Documents\5G_Slicing_Data"
+    # )
+
+    # OPTION 4: Save to current project folder (uncomment and modify)
+    # simulator = UnlimitedNetworkSlicingSimulator(
+    #     save_directory=os.getcwd()
+    # )
+
+    # Run the simulation (runs until you close the window)
+    simulator.run()

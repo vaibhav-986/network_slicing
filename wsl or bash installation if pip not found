@@ -1,0 +1,6 @@
+# First install pip (Ubuntu/Debian)
+sudo apt update
+sudo apt install python3-pip -y
+
+# Then install packages
+pip3 install matplotlib numpy

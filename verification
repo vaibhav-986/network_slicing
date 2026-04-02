@@ -1,0 +1,13 @@
+# Create a test file called test.py
+import matplotlib
+import numpy as np
+
+print(f"✅ matplotlib version: {matplotlib.__version__}")
+print(f"✅ numpy version: {np.__version__}")
+print("✅ All packages installed successfully!")
+
+# Test plot (optional)
+import matplotlib.pyplot as plt
+plt.plot([1, 2, 3], [1, 4, 9])
+plt.title("Test Plot - Close this window to continue")
+plt.show()

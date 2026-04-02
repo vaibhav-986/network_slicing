@@ -1,0 +1,4 @@
+# Test imports
+python3 -c "import matplotlib; import numpy; print('✅ Packages installed successfully!')"
+python3 -c "import matplotlib; print(f'Matplotlib version: {matplotlib.__version__}')"
+python3 -c "import numpy; print(f'NumPy version: {numpy.__version__}')"

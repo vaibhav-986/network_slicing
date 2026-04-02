@@ -1,0 +1,2 @@
+chmod +x install_slicing.sh
+./install_slicing.sh

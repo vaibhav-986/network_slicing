@@ -1,0 +1,27 @@
+@echo off
+echo ========================================
+echo Installing Network Slicing Requirements
+echo ========================================
+
+echo.
+echo Checking Python installation...
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Python not found!
+    echo Please install Python from https://www.python.org/downloads/
+    pause
+    exit /b 1
+)
+
+echo [OK] Python found!
+
+echo.
+echo Installing required packages...
+pip install matplotlib numpy
+
+echo.
+echo ========================================
+echo Installation Complete!
+echo You can now run the network slicing simulator
+echo ========================================
+pause

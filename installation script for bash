@@ -44,3 +44,6 @@ echo "  python network_slicing.py"
 echo ""
 echo "To deactivate when done:"
 echo "  deactivate"
+
+chmod +x install.sh
+./install.sh

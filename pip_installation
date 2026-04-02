@@ -1,0 +1,5 @@
+# Solution: Use --user flag
+pip install --user matplotlib numpy
+
+# Or use sudo (not recommended)
+sudo pip install matplotlib numpy

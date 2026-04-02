@@ -11,3 +11,5 @@ import matplotlib.pyplot as plt
 plt.plot([1, 2, 3], [1, 4, 9])
 plt.title("Test Plot - Close this window to continue")
 plt.show()
+
+python test.py

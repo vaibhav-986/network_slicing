@@ -1,0 +1,5 @@
+# Step 1: Install Python from python.org
+# Step 2: Open Command Prompt
+# Step 3: Run these commands:
+pip install matplotlib numpy
+python network_slicing.py

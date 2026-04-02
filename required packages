@@ -1,0 +1,17 @@
+# Core packages (ABSOLUTELY REQUIRED)
+pip install matplotlib
+pip install numpy
+
+# Or install both at once:
+pip install matplotlib numpy
+# For advanced data analysis
+pip install pandas
+
+# To run as Jupyter notebook
+pip install jupyter
+
+# For statistical functions
+pip install scipy
+
+# For interactive plots
+pip install plotly
